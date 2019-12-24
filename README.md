@@ -1,2 +1,2 @@
-# musicVisible
-a music visible game
+# hello-world
+Hello world new project template.
