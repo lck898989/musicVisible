@@ -22,6 +22,7 @@ export default class MusicdataGet extends cc.Component {
     start() {
         console.log("this.audio is ",this.audio);
         this.bg = this.node.getChildByName("bg");
+
     }
     play () {
         if(!this.audio) {
