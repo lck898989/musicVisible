@@ -19,9 +19,11 @@ export default class NewClass extends cc.Component {
     private spriteComponent: cc.Sprite;
     private mat: cc.Material;
     private time: number = 0;
+
+    private tex: cc.Texture2D;
     start () {
         this.spriteComponent = this.spriteNode.getComponent(cc.Sprite);
-
+        this.tex = this.spriteComponent.spriteFrame.getTexture()
     }
 
     update (dt) {
@@ -30,5 +32,8 @@ export default class NewClass extends cc.Component {
         this.mat.setProperty("iResolution",cc.v2(960,640));
         this.mat.setProperty("time",this.time);
         // this.mat.setProperty("tex",);
+        if(this.tex) {
+            // this.mat.setProperty("tex",this.tex);
+        }
     }
 }

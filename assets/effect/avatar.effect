@@ -66,12 +66,22 @@ CCProgram fs %{
   }
   void mainImage(out vec4 fragColor,in vec2 fragCoord) {
     vec2 uv = (fragCoord.xy / iResolution.xy);
-    uv -= vec2(0.3);
-    uv.x *= iResolution.x / iResolution.y;
-    // fragColor = texture2D(texture,uv);
-    fragColor = vec4(uv,0.,1.);
+    float offsetX = sin(time * .5) * 0.5 + 0.5;
+    float offsetY = cos(time * .5) * 0.5 + 0.5;
+    ivec2 offsetI = ivec2(floor(offsetX),floor(offsetY));
+    vec4 textColor = texture2D(texture,uv);
+    vec4 maskColor = vec4(1.);
+    // uv -= vec2(offsetX,offsetY);
+    maskColor.r *= clamp(offsetX,0.2,0.8);
+    maskColor.g *= clamp(offsetY,0.1,0.7);
+    maskColor.b *= clamp(offsetX,0.4,0.6);
+    maskColor.a = 0.5;
+
+    // fragColor = v_color;
+    fragColor = mix(textColor,maskColor,maskColor);
   }
   void main () {
     mainImage(gl_FragColor,v_uv0.xy * iResolution.xy);
+    // mainImage()
   }
 }%
