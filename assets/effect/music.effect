@@ -69,10 +69,13 @@ CCProgram fs %{
   {
     vec2 uv = fragCoord.xy / res.xy;
     uv.y = 1. - uv.y;
+    uv.x = 1. - uv.x;
+    // uv = cc.vec2(1.-uv.x,1.-uv.y);
     float dx = 1./res.x;
     float fmax = iSampleRate/4.;
     float c=0.;
-      
+    float cg = 0.;
+    float cb = 0.;
     for(int once=0; once<1; once++) { // because early returns cause issues on some compilers
         if (uv.y>.9) {
             // bars
@@ -95,8 +98,8 @@ CCProgram fs %{
               if (f>=440.) c = max(c,texture(tex,vec2(f/fmax,.5/2.)).r);
                 f *= 2.;
             }
-            c = fract((c-.3)*1.5);
-            fragColor=vec4(fract(1.5*c),fract(c),fract(.7*c),1);
+            c = (c-.3)*1.5;
+            fragColor=vec4(1.5*c,c,.7*c,1);
             break;
         } else if (uv.y>.6) {  // 2nd sub-window: narrow spectrum
           uv.y = (uv.y-.6)/.3;
@@ -116,7 +119,10 @@ CCProgram fs %{
             break;	
           }
           // data
-          c = texture(tex,vec2(uv.x,.5/2.)).r;
+          vec4 textureColor = texture(tex,vec2(uv.x,.5/2.));
+          cg = 0.1 * sin(textureColor.g * 0.5 + time) + 0.9;
+          cb = 0.1 * sin(textureColor.b * 0.3 + time) + 0.9;
+          c = textureColor.r;
           c = (uv.y<c) ? 1. : 0.;
         } else if (uv.y>.3) {  // 3rd sub-window: large spectrum
           // 大的声谱
@@ -136,6 +142,9 @@ CCProgram fs %{
             break; 
           }
           //data
+          vec4 textureColor = texture(tex,vec2(uv.x,.5/2.));
+          cg = 0.1 * sin(textureColor.g * 0.5 + time) + 0.9;
+          cb = 0.1 * sin(textureColor.b * 0.3 + time) + 0.9;
           c = texture(tex,vec2(uv.x,.5/2.)).r;
           c = (uv.y<c) ? 1. : 0.;
         }
@@ -153,13 +162,16 @@ CCProgram fs %{
             }
             uv.x += xm/512.;
           #endif
+          vec4 textureColor = texture(tex,vec2(uv.x,.5/2.));
+          cg = 0.1 * sin(textureColor.g * 0.5 + time) + 0.9;
+          cb = 0.1 * sin(textureColor.b * 0.3 + time) + 0.9;
           c = texture(tex,vec2(uv.x,1.5/2.)).r;
           c = (uv.y<c) ? 1. : 0.;
         }
         // c.r = 0.5 * sin(uv.x * 3. + time) + 0.5;
-        c += 0.05 * sin(uv.x * 3. + time);
+        // c += 0.05 * sin(uv.x * 3. + time);
         // c.g = 0.5 * sin(uv.x * 3. + time) + 0.51;
-        fragColor = vec4(c);
+        fragColor = vec4(c,c,c,1.0);
     }}
   void main () {
     vec2 res = vec2(960.,320.);
