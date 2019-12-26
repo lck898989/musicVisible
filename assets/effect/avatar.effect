@@ -80,6 +80,30 @@ CCProgram fs %{
     // fragColor = v_color;
     fragColor = mix(textColor,maskColor,maskColor);
   }
+  /*
+  #define ANGLE 60.0
+
+float startX = 0.0;
+float thresholdX = 0.08;
+float blur = 0.04;
+float posInterval = 0.02;
+
+float colFactor(vec2 uv, float thresholdX, float blur){
+    float intervalY = uv.y;
+    float tempX = intervalY * cos(radians(ANGLE)) + startX;
+    float intervalX = uv.x - tempX;
+    return smoothstep(thresholdX, thresholdX - blur, abs(intervalX));
+}
+
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 uv = fragCoord/iResolution.xy;
+    startX = tan(iTime);
+    float factor = colFactor(uv, thresholdX, blur);
+    fragColor = factor * vec4(1.0, 0.8, 0.8, 1.0) + vec4(0.0) * (1.0 - factor);
+}*/
   void main () {
     mainImage(gl_FragColor,v_uv0.xy * iResolution.xy);
     // mainImage()
