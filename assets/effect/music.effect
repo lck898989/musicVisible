@@ -64,73 +64,117 @@ CCProgram fs %{
     sampler2D tex;
     float time;
   }
-  #define SOUND_MULTIPLIER 1.0
-  /*
-  void mainImage( out vec4 fragColor, in vec2 fragCoord )
+  float iSampleRate = 44100.;
+  void mainImage( out vec4 fragColor, in vec2 fragCoord ,vec2 res)
   {
-    // 将纹理坐标限制范围[0-1]
-	  vec2 uv = (fragCoord.xy / iResolution.xy);
-    // 纹理坐标偏移
-    uv -= vec2(0.5);
-    uv.x *= iResolution.x/iResolution.y;
-    
-    // Calculate polar coordinates
-    float r = length(uv);
-    float a = atan(uv.y, uv.x);
-       
-    // Draw the lines
-    const float it = 5.0;
-    float c = 0.0;
-    for( float i = 0.0 ; i < it ; i += 1.0 )
-    {
-        float i01 = i / it;
-        float rnd = texture( iChannel0, vec2(i01)).x;
-        float react = SOUND_MULTIPLIER * texture( iChannel1, vec2(i01, 0.0) ).x;    
-        
-        float c1 = (uv.x + 1.1 + react) * 0.004 * abs( 1.0 / sin( (uv.y +0.25) +
-                                                         sin(uv.x * 4.0 * rnd + rnd * 7.0 + time * 0.75) *
-                                                                 (0.01 + 0.15*react)));
-        c = clamp(c + c1, 0.0, 1.0);
-    }
-    
-    float s = 0.0;
-    const float it2 = 20.0;
-    for( float i = 0.0 ; i < it2 ; i += 1.0 )
-    {
-        float i01 = i / it2;       
-        float react = SOUND_MULTIPLIER * texture( iChannel1, vec2(i01, 0.0) ).x;  
-        vec2 rnd = texture( iChannel0, vec2(i01)).xy;
-        vec2 rnd2 = rnd - 0.5;
-      
-        rnd2 = vec2(0.85*sin(rnd2.x * 200.0 + rnd2.y * time * 0.1), 
-                    -0.1 - 0.15 * sin(rnd2.x * rnd2.x * 200.0 + time  * rnd2.x * 0.25));
-        
-        float r1 = 1.0 - length(uv - rnd2);
-        float rad = ( 1.0 - clamp(0.03 * rnd.y + react * 0.05, 0.0, 1.0) );
+    vec2 uv = fragCoord.xy / res.xy;
+    uv.y = 1. - uv.y;
+    uv.x = 1. - uv.x;
+    // uv = cc.vec2(1.-uv.x,1.-uv.y);
+    float dx = 1./res.x;
+    float fmax = iSampleRate/4.;
+    float c=0.;
+    float cg = 0.;
+    float cb = 0.;
+    for(int once=0; once<1; once++) { // because early returns cause issues on some compilers
+        if (uv.y>.9) {
+            // bars
+            if ((uv.x<4.*dx)||(1.-uv.x<4.*dx))
+            { 
+              fragColor = vec4(1.,.7,0.,0.6);
+              break;
+            }
+            if ((abs(uv.x-2./12.)<dx)||(abs(uv.x-3./12.)<dx)||(abs(uv.x-5./12.)<dx)||(abs(uv.x-7./12.)<dx)||(abs(uv.x-8./12.)<dx)||(abs(uv.x-10./12.)<dx)) {
+              fragColor = vec4(.4,.4,1.,0.6);
+              break;
+            }
+            if (mod(uv.x,1./12.)<dx) {
+              fragColor = vec4(0.,0.,.7,0.6);
+              break;
+            }
+            // data
+            float f = 440.*pow(2.,uv.x); // still, avoid < 440Hz since not enough resolution
+            for (float i=1.; i<=5.; i++) { 
+              if (f>=440.) c = max(c,texture(tex,vec2(f/fmax,.5/2.)).r);
+                f *= 2.;
+            }
+            c = (c-.3)*1.5;
+            fragColor=vec4(1.5*c,c,.7*c,1);
+            break;
+        } else if (uv.y>.6) {  // 2nd sub-window: narrow spectrum
+          uv.y = (uv.y-.6)/.3;
+          uv.x /= 5.;
+          float f = uv.x*fmax;
+          // bars
+          if (abs(f-440.)< fmax/(5.*res.x)) { 
+            fragColor = vec4(1.,.7,0.,0.6); 
+            break;	
+          }
+          if (mod(log(f/440.)/log(2.),1.)< .5/(res.x*uv.x)) { 
+            fragColor = vec4(.7,0.,0.,0.6); 
+            break;	
+          }
+          if (mod(f,440.)< fmax/(5.*res.x)) { 
+            fragColor = vec4(0.,.7,0.,0.6); 
+            break;	
+          }
+          // data
+          vec4 textureColor = texture(tex,vec2(uv.x,.5/2.));
+          cg = 0.1 * sin(textureColor.g * 0.5 + time) + 0.9;
+          cb = 0.1 * sin(textureColor.b * 0.3 + time) + 0.9;
+          c = textureColor.r;
+          c = (uv.y<c) ? 1. : 0.;
+        } else if (uv.y>.3) {  // 3rd sub-window: large spectrum
+          // 大的声谱
+          uv.y = (uv.y-.3)/.3; 
+          float f = uv.x*fmax;
+          // bars
+          if (abs(f-440.)< fmax/res.x) { 
+            fragColor = vec4(1.,.7,0.,0.6); 
+            break;	
+          }
+          if (mod(log(f/440.)/log(2.),1.)< 2./(res.x*uv.x)) { 
+            fragColor = vec4(.7,0.,0.,0.6); 
+            break;	
+          } 
+          if (mod(f,440.)< fmax/res.x) { 
+            fragColor = vec4(0.,.7,0.,0.6); 
+            break; 
+          }
+          //data
+          vec4 textureColor = texture(tex,vec2(uv.x,.5/2.));
+          cg = 0.1 * sin(textureColor.g * 0.5 + time) + 0.9;
+          cb = 0.1 * sin(textureColor.b * 0.3 + time) + 0.9;
+          c = texture(tex,vec2(uv.x,.5/2.)).r;
+          c = (uv.y<c) ? 1. : 0.;
+        }
 
-        r1 = smoothstep(rad, rad + 0.015, r1);
-        s += r1;
-    }
-    
-    
-    // Calculate the final color mixing lines and backgrounds
-    vec3 bg = mix( vec3(0.93, 0.71, 0.62), vec3(0.9, 0.44, 0.44), r);
-    bg = mix(bg, vec3(0.9, 0.91, 0.62), c);
-    bg = mix(bg, vec3(0.9, 0.91, 0.82), s);
-    
-    fragColor = vec4(bg, 1.0);
-  }
-  */
+        else { // 4th sub-window: signal
+          uv.y = (uv.y-0.)/.3;
+          #if 1 // synchro: start signal on a min value
+            float m=999., xm;
+            for (float x=0.5; x< 100.; x+=1.) {
+                c =  texture(tex,vec2(x/512.,1.5/2.)).r;
+                if (c<m) {
+                  m=c; 
+                  xm=x;
+                }
+            }
+            uv.x += xm/512.;
+          #endif
+          vec4 textureColor = texture(tex,vec2(uv.x,.5/2.));
+          cg = 0.1 * sin(textureColor.g * 0.5 + time) + 0.9;
+          cb = 0.1 * sin(textureColor.b * 0.3 + time) + 0.9;
+          c = texture(tex,vec2(uv.x,1.5/2.)).r;
+          c = (uv.y<c) ? 1. : 0.;
+        }
+        // c.r = 0.5 * sin(uv.x * 3. + time) + 0.5;
+        // c += 0.05 * sin(uv.x * 3. + time);
+        // c.g = 0.5 * sin(uv.x * 3. + time) + 0.51;
+        fragColor = vec4(c,c,c,1.0);
+    }}
   void main () {
-    vec2 uv = vec2(v_uv0.x,v_uv0.y);
-    if(uv.y > 0.5) {
-      discard;
-    }
-    vec4 testColor = texture2D(tex,uv);
-    vec2 res = sin(testColor.xy / v_uv0.xy) * 0.5 + 0.5;
-
-    gl_FragColor = vec4(res,testColor.b,1.0);
-    vec4 changeColor = texture2D(tex,v_uv0);
-    // mainImage(gl_FragColor,v_uv0.xy * iResolution.xy);
+    vec2 res = vec2(960.,320.);
+    mainImage(gl_FragColor,v_uv0.xy * res.xy,res);
   }
 }%

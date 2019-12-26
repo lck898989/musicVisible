@@ -64,48 +64,37 @@ CCProgram fs %{
     vec2 iResolution;
     float time;
   }
-  void mainImage(out vec4 fragColor,in vec2 fragCoord) {
-    vec2 uv = (fragCoord.xy / iResolution.xy);
-    float offsetX = sin(time * .5) * 0.5 + 0.5;
-    float offsetY = cos(time * .5) * 0.5 + 0.5;
-    ivec2 offsetI = ivec2(floor(offsetX),floor(offsetY));
-    vec4 textColor = texture2D(texture,uv);
-    vec4 maskColor = vec4(1.);
-    // uv -= vec2(offsetX,offsetY);
-    maskColor.r *= clamp(offsetX,0.2,0.8);
-    maskColor.g *= clamp(offsetY,0.1,0.7);
-    maskColor.b *= clamp(offsetX,0.4,0.6);
-    maskColor.a = 0.5;
 
-    // fragColor = v_color;
-    fragColor = mix(textColor,maskColor,maskColor);
+  void mainImage(out vec4 fragColor,in vec2 fragCoord,vec2 res) {
+    // vec2 uv = (fragCoord.xy / res.xy);
+    // float offsetX = sin(time * .5) * 0.5 + 0.5;
+    // float offsetY = cos(time * .5) * 0.5 + 0.5;
+    // ivec2 offsetI = ivec2(floor(offsetX),floor(offsetY));
+    // vec4 textColor = texture2D(texture,uv);
+    // vec4 maskColor = vec4(1.);
+    // // uv -= vec2(offsetX,offsetY);
+    // maskColor.r *= clamp(offsetX,0.2,0.8);
+    // maskColor.g *= clamp(offsetY,0.1,0.7);
+    // maskColor.b *= clamp(offsetX,0.4,0.6);
+    // maskColor.a = 0.5;
+
+    // // fragColor = v_color;
+    // fragColor = mix(textColor,maskColor,maskColor);
+    vec2 sp = (fragCoord * 2. - res.xy) / min(res.y,res.x);
+    // dot(sp,sp) = sp.x * sp.x + sp.y * sp.y = 
+    sp.y *= dot(sp,sp);
+    float color = 0.;
+    for(int i = 0; i < 5; i++) { 
+      float t = float(i + 10) + sin(time * 0.6 + float(i));
+      color += 0.05 / distance(sp,vec2(sp.x,cos(t + sp.x)));
+    }
+    fragColor = vec4(color * vec3(.0+cos(time*0.5)*0.025+0.025, 0.05+cos(time*1.1)*0.025+0.025, 0.05+cos(time*.72)*0.025+0.025), 1.0);
   }
-  /*
-  #define ANGLE 60.0
-
-float startX = 0.0;
-float thresholdX = 0.08;
-float blur = 0.04;
-float posInterval = 0.02;
-
-float colFactor(vec2 uv, float thresholdX, float blur){
-    float intervalY = uv.y;
-    float tempX = intervalY * cos(radians(ANGLE)) + startX;
-    float intervalX = uv.x - tempX;
-    return smoothstep(thresholdX, thresholdX - blur, abs(intervalX));
-}
-
-
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
-{
-    // Normalized pixel coordinates (from 0 to 1)
-    vec2 uv = fragCoord/iResolution.xy;
-    startX = tan(iTime);
-    float factor = colFactor(uv, thresholdX, blur);
-    fragColor = factor * vec4(1.0, 0.8, 0.8, 1.0) + vec4(0.0) * (1.0 - factor);
-}*/
+ 
   void main () {
-    mainImage(gl_FragColor,v_uv0.xy * iResolution.xy);
+    vec2 res = vec2(300.,300.);
+
+    mainImage(gl_FragColor,v_uv0.xy * res.xy,res);
     // mainImage()
   }
 }%
