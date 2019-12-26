@@ -78,62 +78,61 @@ CCProgram fs %{
             // bars
             if ((uv.x<4.*dx)||(1.-uv.x<4.*dx))
             { 
-              fragColor = vec4(1.,.7,0.,0.);
+              fragColor = vec4(1.,.7,0.,0.6);
               break;
             }
             if ((abs(uv.x-2./12.)<dx)||(abs(uv.x-3./12.)<dx)||(abs(uv.x-5./12.)<dx)||(abs(uv.x-7./12.)<dx)||(abs(uv.x-8./12.)<dx)||(abs(uv.x-10./12.)<dx)) {
-              fragColor = vec4(.4,.4,1.,0.);
+              fragColor = vec4(.4,.4,1.,0.6);
               break;
             }
             if (mod(uv.x,1./12.)<dx) {
-              fragColor = vec4(0.,0.,.7,0.);
+              fragColor = vec4(0.,0.,.7,0.6);
               break;
             }
             // data
             float f = 440.*pow(2.,uv.x); // still, avoid < 440Hz since not enough resolution
             for (float i=1.; i<=5.; i++) { 
-              if (f>=440.) c =  max(c,texture(tex,vec2(f/fmax,.5/2.)).r);
+              if (f>=440.) c = max(c,texture(tex,vec2(f/fmax,.5/2.)).r);
                 f *= 2.;
             }
-            c = (c-.3)*1.5 ; 
-            fragColor=vec4(1.5*c,c,.7*c,1); 
+            c = fract((c-.3)*1.5);
+            fragColor=vec4(fract(1.5*c),fract(c),fract(.7*c),1);
             break;
-        }
-        else if (uv.y>.6) {  // 2nd sub-window: narrow spectrum
+        } else if (uv.y>.6) {  // 2nd sub-window: narrow spectrum
           uv.y = (uv.y-.6)/.3;
           uv.x /= 5.;
           float f = uv.x*fmax;
           // bars
           if (abs(f-440.)< fmax/(5.*res.x)) { 
-            fragColor = vec4(1.,.7,0.,0.); 
+            fragColor = vec4(1.,.7,0.,0.6); 
             break;	
           }
           if (mod(log(f/440.)/log(2.),1.)< .5/(res.x*uv.x)) { 
-            fragColor = vec4(.7,0.,0.,0.); 
+            fragColor = vec4(.7,0.,0.,0.6); 
             break;	
           }
           if (mod(f,440.)< fmax/(5.*res.x)) { 
-            fragColor = vec4(0.,.7,0.,0.); 
+            fragColor = vec4(0.,.7,0.,0.6); 
             break;	
           }
           // data
           c = texture(tex,vec2(uv.x,.5/2.)).r;
           c = (uv.y<c) ? 1. : 0.;
-        }
-        else if (uv.y>.3) {  // 3rd sub-window: large spectrum
+        } else if (uv.y>.3) {  // 3rd sub-window: large spectrum
+          // 大的声谱
           uv.y = (uv.y-.3)/.3; 
           float f = uv.x*fmax;
           // bars
           if (abs(f-440.)< fmax/res.x) { 
-            fragColor = vec4(1.,.7,0.,0.); 
+            fragColor = vec4(1.,.7,0.,0.6); 
             break;	
           }
           if (mod(log(f/440.)/log(2.),1.)< 2./(res.x*uv.x)) { 
-            fragColor = vec4(.7,0.,0.,0.); 
+            fragColor = vec4(.7,0.,0.,0.6); 
             break;	
-          }
+          } 
           if (mod(f,440.)< fmax/res.x) { 
-            fragColor = vec4(0.,.7,0.,0.); 
+            fragColor = vec4(0.,.7,0.,0.6); 
             break; 
           }
           //data
@@ -154,7 +153,7 @@ CCProgram fs %{
             }
             uv.x += xm/512.;
           #endif
-          c =  texture(tex,vec2(uv.x,1.5/2.)).r;
+          c = texture(tex,vec2(uv.x,1.5/2.)).r;
           c = (uv.y<c) ? 1. : 0.;
         }
         // c.r = 0.5 * sin(uv.x * 3. + time) + 0.5;
