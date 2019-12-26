@@ -31,6 +31,7 @@ export default class MusicdataGet extends cc.Component {
         if(window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"] || window["msAudioContext"]) {
             if(window["AudioContext"]) {
                 this.audioContext = new window.AudioContext();
+                
             } else if(window["webkitAudioContext"]) {
                 this.audioContext = new window["webkitAudioContext"]();
             } else if(window["mozAudioContext"]) {
@@ -95,6 +96,8 @@ export default class MusicdataGet extends cc.Component {
 
         } else {
             console.log("不支持音频播放");
+            console.log("AudioContext is ",AudioContext);
+            console.log("---> ");
         }
     }
     btnEvent(e: cc.Event,data: any): void {
