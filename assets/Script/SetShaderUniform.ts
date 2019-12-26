@@ -24,6 +24,10 @@ export default class NewClass extends cc.Component {
     start () {
         this.spriteComponent = this.spriteNode.getComponent(cc.Sprite);
         this.tex = this.spriteComponent.spriteFrame.getTexture()
+        let a = cc.v2(2,2);
+        let b = cc.v2(2,2);
+        let res = a.dot(b);
+        console.log("res is ",res);
     }
 
     update (dt) {
