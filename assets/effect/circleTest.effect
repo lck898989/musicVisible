@@ -1,0 +1,91 @@
+// Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.  
+
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: vs
+      frag: fs
+      blendState:
+        targets:
+        - blend: true
+      rasterizerState:
+        cullMode: none
+      properties:
+        texture: { value: white }
+        alphaThreshold: { value: 0.5 }
+}%
+
+
+CCProgram vs %{
+  precision highp float;
+
+  #include <cc-global>
+  #include <cc-local>
+
+  in vec3 a_position;
+  in vec4 a_color;
+  out vec4 v_color;
+
+  #if USE_TEXTURE
+  in vec2 a_uv0;
+  out vec2 v_uv0;
+  #endif
+
+  void main () {
+    vec4 pos = vec4(a_position, 1);
+
+    #if CC_USE_MODEL
+    pos = cc_matViewProj * cc_matWorld * pos;
+    #else
+    pos = cc_matViewProj * pos;
+    #endif
+
+    #if USE_TEXTURE
+    v_uv0 = a_uv0;
+    #endif
+
+    v_color = a_color;
+
+    gl_Position = pos;
+  }
+}%
+
+
+CCProgram fs %{
+  precision highp float;
+  
+  #include <alpha-test>
+
+  in vec4 v_color;
+
+  in vec2 v_uv0;
+  uniform sampler2D texture;
+  uniform ARGS {
+    vec2 iResolution;
+    float time;
+  }
+  void drawCircle(vec2 curUV,vec2 center,float radius,out vec4 color) {
+    float res;
+    // 圆周运动
+    // curUV.x += 0.1 * sin(curUV.x * 0.2 + time);
+    // curUV.y += 0.1 * cos(curUV.x * 0.2 + time);
+    res = sqrt(pow((curUV.x - center.x),2.)+pow((curUV.y - center.y),2.));
+    vec4 cirColor = vec4(1.0,1.,0.,1.);
+    vec4 texColor = texture2D(texture,curUV);
+    if(res < radius) {
+      color = cirColor * 0. + texColor * 1.;
+    } else {
+      color = cirColor * 0. + texColor * 0.;   
+    }
+  }
+  void mainImage(out vec4 fragColor,in vec2 uv,vec2 res) {
+    vec2 tempUV = uv.xy / res.xy;
+    vec2 center = vec2(0.5,0.5);
+    float r = 0.5;
+    drawCircle(tempUV,center,r,fragColor);
+  }
+  void main () {
+    // vec2 res = vec2(200.,200.);
+    mainImage(gl_FragColor,v_uv0.xy * iResolution.xy,iResolution);
+  }
+}%

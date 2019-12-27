@@ -123,7 +123,15 @@ CCProgram fs %{
           cg = 0.1 * sin(textureColor.g * 0.5 + time) + 0.9;
           cb = 0.1 * sin(textureColor.b * 0.3 + time) + 0.9;
           c = textureColor.r;
-          c = (uv.y<c) ? 1. : 0.;
+          // c = (uv.y<c) ? 1. : 0.;
+          if(uv.y < c) {
+            c = 1.;
+            if(uv.y < c / 2.) {
+              c = 0.5;
+            }
+          } else {
+            c = 0.;
+          }
         } else if (uv.y>.3) {  // 3rd sub-window: large spectrum
           // 大的声谱
           uv.y = (uv.y-.3)/.3; 
@@ -146,7 +154,14 @@ CCProgram fs %{
           cg = 0.1 * sin(textureColor.g * 0.5 + time) + 0.9;
           cb = 0.1 * sin(textureColor.b * 0.3 + time) + 0.9;
           c = texture(tex,vec2(uv.x,.5/2.)).r;
-          c = (uv.y<c) ? 1. : 0.;
+          if(uv.y < c) {
+            c = 1.;
+            if(uv.y < c / 2.) {
+              c = 0.5;
+            }
+          } else {
+            c = 0.;
+          }
         }
 
         else { // 4th sub-window: signal
@@ -166,11 +181,15 @@ CCProgram fs %{
           cg = 0.1 * sin(textureColor.g * 0.5 + time) + 0.9;
           cb = 0.1 * sin(textureColor.b * 0.3 + time) + 0.9;
           c = texture(tex,vec2(uv.x,1.5/2.)).r;
-          c = (uv.y<c) ? 1. : 0.;
+          if(uv.y < c) {
+            c = 1.;
+            if(uv.y < c / 2.) {
+              c = 0.5;
+            }
+          } else {
+            c = 0.;
+          }
         }
-        // c.r = 0.5 * sin(uv.x * 3. + time) + 0.5;
-        // c += 0.05 * sin(uv.x * 3. + time);
-        // c.g = 0.5 * sin(uv.x * 3. + time) + 0.51;
         fragColor = vec4(c,c,c,1.0);
     }}
   void main () {

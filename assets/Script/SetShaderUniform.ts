@@ -19,7 +19,7 @@ export default class NewClass extends cc.Component {
     private spriteComponent: cc.Sprite;
     private mat: cc.Material;
     private time: number = 0;
-
+    private resolution: cc.Vec2;
     private tex: cc.Texture2D;
     start () {
         this.spriteComponent = this.spriteNode.getComponent(cc.Sprite);
@@ -28,12 +28,13 @@ export default class NewClass extends cc.Component {
         let b = cc.v2(2,2);
         let res = a.dot(b);
         console.log("res is ",res);
+        this.resolution = cc.v2(this.node.width,this.node.height);
     }
 
     update (dt) {
         this.time += dt;
         this.mat = this.spriteComponent.sharedMaterials[0];
-        this.mat.setProperty("iResolution",cc.v2(960,640));
+        this.mat.setProperty("iResolution",this.resolution);
         this.mat.setProperty("time",this.time);
         // this.mat.setProperty("tex",);
         if(this.tex) {
