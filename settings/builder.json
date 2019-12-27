@@ -17,14 +17,14 @@
   "optimizeHotUpdate": false,
   "md5Cache": false,
   "encryptJs": true,
-  "xxteaKey": "d182693c-387b-44",
+  "xxteaKey": "791f7ca4-5b75-43",
   "zipCompressJs": true,
   "fb-instant-games": {},
   "android": {
     "packageName": "org.cocos2d.helloworld"
   },
   "ios": {
-    "packageName": "org.cocos2d.helloworld"
+    "packageName": "org.cocos2d.linegame"
   },
   "mac": {
     "packageName": "org.cocos2d.helloworld"
