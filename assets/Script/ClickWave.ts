@@ -9,6 +9,7 @@ export default class ClickWave extends cc.Component {
     private waveA: number[][] = [];
     // 相当于uv坐标中的v
     private waveB: number[][] = [];
+    private wa: Uint8Array;
     private waveWidth: number;
     private waveHeight: number;
 
@@ -17,6 +18,9 @@ export default class ClickWave extends cc.Component {
         this.waveWidth = this.node.width;
         this.waveHeight = this.node.height;
         this.initWaveABArray();
+        this.wa = new Uint8Array(this.waveHeight);
+        // console.log("wa is ",this.wa);
+        this.uvOffsetTexture = new cc.Texture2D();
         console.log("waveA is ",this.waveA);
         console.log("waveB is ",this.waveB);
 
@@ -35,9 +39,11 @@ export default class ClickWave extends cc.Component {
         }
     }
     start () {
+        // 鼠标点击时间改变waveA的数据
         this.node.on("touchstart",this.touchBegin,this);
         this.node.on("touchmove",this.touchBegin,this);
         this.node.on("touchend",this.touchBegin,this);
+
     }
     private touchBegin(e: cc.Event.EventTouch): boolean {
         let localPoint = this.node.convertToNodeSpaceAR(e.getLocation());
@@ -52,7 +58,20 @@ export default class ClickWave extends cc.Component {
         let localPoint = this.node.convertToNodeSpaceAR(e.getLocation());
 
     }
-    update (dt) {
+    // 计算波形
+    private calculateWave(): void {
+        for(let i = 1; i < this.waveHeight - 1; i++) {
+            for(let j = 1; j < this.waveWidth - 1; j++) {
+                this.waveB[i][j] = (this.waveA[i-1][j-1] + this.waveA[i-1][j] + this.waveA[i-1][j+1] + this[i][j-1]+
+                                    this.waveA[i][j + 1] + this.waveA[i+1][j-1] + this.waveA[i+1][j] + this.waveA[i+1][j+1]) / 4 - this.waveB[i][j];
+                // this.uvOffsetTexture.initWithData(this.waveB,)
+            }
+        }
+        // 衰减uv值
+        
 
+    }
+    update (dt) {
+        this.calculateWave();
     }
 }
