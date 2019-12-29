@@ -65,7 +65,22 @@ CCProgram fs %{
   uniform sampler2D texture;
   void main () {
     vec2 uv = v_uv0.xy;
-    uv += vec2(0.,0.02 * cos(uv.x * 10. + time));
-    gl_FragColor = texture2D(texture,uv);
+    float r = 0.6;
+    // uv += vec2(0.,0.02 * sin((uv.x + uv.y) * 10. + time));
+    // uv += vec2(0.,0.01 * sin((uv.x - uv.y) * 9. + time * 2.3));
+    float factor = 0.;
+    float dis = distance(uv,vec2(0.5,0.5));
+    // 在限定的半径范围内进行uv动画
+    float disFactor = 0.04;
+    if(dis < r) {
+      // factor *= disFactor;
+      // 根据距离改变衰减系数
+      disFactor *= 1. - dis / r;
+      factor = disFactor * sin(-dis * 10. + time);
+      uv += vec2(0.,factor);
+      // vec4 textColor = texture2D(texture,uv);
+    }
+    vec4 targetColor = texture2D(texture,uv);// + vec4(1.,1.,1.,1.) * clamp(factor,0.,1.) * 20.;
+    gl_FragColor = targetColor;
   }
 }%

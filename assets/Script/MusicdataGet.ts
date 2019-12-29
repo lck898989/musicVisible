@@ -107,6 +107,9 @@ export default class MusicdataGet extends cc.Component {
                 this.isCanPlay = true;
                 this.play();
                 break;
+            case "index":
+                cc.director.loadScene("index");
+                break;
         }
     }
     update (dt) {
