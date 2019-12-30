@@ -22,7 +22,9 @@ export default class MusicdataGet extends cc.Component {
     start() {
         console.log("this.audio is ",this.audio);
         this.bg = this.node.getChildByName("bg");
-
+        if(this.audioSource) {
+            this.audioSource.start();
+        }
     }
     play () {
         if(!this.audio) {
@@ -65,30 +67,36 @@ export default class MusicdataGet extends cc.Component {
             this.audioGainNode.connect(this.audioContext.destination);
             // 每30毫秒获取一次数据
             let time = 0;
-            setInterval(() => {
+            let inId = setInterval(() => {
                 time += 10;
                 if(!this.backgroundSoundBuffer) {
-                    this.backgroundSoundBuffer = new Uint8Array(this.analyserNode.frequencyBinCount);
+                    if(this.analyserNode && this.analyserNode.frequencyBinCount) {
+                        this.backgroundSoundBuffer = new Uint8Array(this.analyserNode.frequencyBinCount);
+                    } else {
+                        clearInterval(inId);
+                    }
                 }
                 // let buffer: Uint8Array = new Uint8Array(this.analyserNode.frequencyBinCount);
-                // 获取音频数据
-                this.analyserNode.getByteFrequencyData(this.backgroundSoundBuffer);
-                console.log("音域信息是：",this.backgroundSoundBuffer);
-                // 跟新texture
-                let initSuccess: boolean = this.musicTexture.initWithData(this.backgroundSoundBuffer,cc.Texture2D.PixelFormat.RGBA8888,this.backgroundSoundBuffer.length / 4,1);
-                // let spriteF: cc.SpriteFrame = new cc.SpriteFrame();
-                // spriteF.setTexture(this.musicTexture);
-                // this.musicTex.getComponent(cc.Sprite).spriteFrame = spriteF;
-                console.log("initSuccess is ",initSuccess);
-                // this.musicTexture.update();
-                if(initSuccess) {
-                    console.log("tex is ",this.musicTexture);
-                    // 设置shader 
-                    let m = this.bg.getComponent(cc.Sprite).sharedMaterials[0];
-                    console.log("m is ",m);
-                    m.setProperty("tex",this.musicTexture);
-                    m.setProperty("time",time);
-                    m.setProperty("iResolution",cc.v2(750,1334));
+                if(this.analyserNode) {
+                    // 获取音频数据
+                    this.analyserNode.getByteFrequencyData(this.backgroundSoundBuffer);
+                    console.log("音域信息是：",this.backgroundSoundBuffer);
+                    // 跟新texture
+                    let initSuccess: boolean = this.musicTexture.initWithData(this.backgroundSoundBuffer,cc.Texture2D.PixelFormat.RGBA8888,this.backgroundSoundBuffer.length / 4,1);
+                    // let spriteF: cc.SpriteFrame = new cc.SpriteFrame();
+                    // spriteF.setTexture(this.musicTexture);
+                    // this.musicTex.getComponent(cc.Sprite).spriteFrame = spriteF;
+                    console.log("initSuccess is ",initSuccess);
+                    // this.musicTexture.update();
+                    if(initSuccess) {
+                        console.log("tex is ",this.musicTexture);
+                        // 设置shader 
+                        let m = this.bg.getComponent(cc.Sprite).sharedMaterials[0];
+                        console.log("m is ",m);
+                        m.setProperty("tex",this.musicTexture);
+                        m.setProperty("time",time);
+                        m.setProperty("iResolution",cc.v2(750,1334));
+                    }
                 }
                 // let m = this.musicTex.getComponent(cc.Sprite).getMaterial(0);
                 // m.setProperty("texture",this.musicTexture);
@@ -108,6 +116,9 @@ export default class MusicdataGet extends cc.Component {
                 this.play();
                 break;
             case "index":
+                if(this.audioSource) {
+                    this.audioSource.stop();
+                }
                 cc.director.loadScene("index");
                 break;
         }
