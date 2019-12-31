@@ -189,7 +189,7 @@
       "array": [
         0,
         0,
-        353.3860003698988,
+        355.0704155516199,
         0,
         0,
         0,
@@ -370,8 +370,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 300,
-      "height": 300
+      "width": 350,
+      "height": 350
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -382,7 +382,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -271.135,
+        -293.647,
         -122.653,
         0,
         0,
@@ -779,6 +779,9 @@
     "_enabled": true,
     "targetSpriteNode": {
       "__id__": 19
+    },
+    "spriteNode": {
+      "__id__": 16
     },
     "_id": "caJbrODe9GvabGTtnkXBhO"
   },

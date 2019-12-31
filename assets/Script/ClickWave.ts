@@ -15,24 +15,13 @@ export default class ClickWave extends cc.Component {
 
     @property(cc.Node)
     targetSpriteNode: cc.Node = null;
-
+    @property(cc.Node)
+    spriteNode: cc.Node = null;
+    private time: number = 0;
     private material: cc.Material;        
     onLoad () {
-        this.waveWidth = this.node.width;
-        this.waveHeight = this.node.height;
-        // 模拟波形，投掷一个石头激起的波形示例
-        this.initWaveABArray();
-        this.initWaveA();
-        this.initTextureDate();
-        // 图片存储数据
-        this.wa = new Uint8Array(this.waveHeight * this.waveWidth * 4);
-        // console.log("wa is ",this.wa);
-        this.uvOffsetTexture = new cc.Texture2D();
-        console.log("waveA is ",this.waveA);
-        console.log("waveB is ",this.waveB);
-        this.material = this.node.getComponent(cc.Sprite).sharedMaterials[0];
         
- 
+        
     }
     // 初始化wave波形数据默认是没有波形的所以数值为0.0的浮点数
     private initWaveABArray(): void {
@@ -48,19 +37,7 @@ export default class ClickWave extends cc.Component {
         }
     }
     private initWaveA(): void {
-        // for(let i = 1; i < this.waveHeight-1; i++) {
-        //     for(let j = 1; j < this.waveWidth-1; j++) {
-        //         this.waveA[i][j] = 1.0;
-        //         this.waveA[i-1][j - 1] = 1.0;
-        //         this.waveA[i-1][j] = 1.0;
-        //         this.waveA[i-1][j + 1] = 1.0;
-        //         this.waveA[i][j-1] = 1.0;
-        //         this.waveA[i][j+1] = 1.0;
-        //         this.waveA[i + 1][j-1] = 1.0;
-        //         this.waveA[i + 1][j] = 1.0;
-        //         this.waveA[i + 1][j + 1] = 1.0;
-        //     }
-        // }
+        
     }
     start () {
         // 鼠标点击时间改变waveA的数据
@@ -68,6 +45,18 @@ export default class ClickWave extends cc.Component {
         this.node.on("touchmove",this.touchBegin,this);
         this.node.on("touchend",this.touchBegin,this);
         // this.calculateWave();
+        this.material = this.spriteNode.getComponent(cc.Sprite).sharedMaterials[0];
+        // 图片存储数据
+        this.wa = new Uint8Array(this.waveWidth * this.waveHeight * 4);
+        // console.log("wa is ",this.wa);
+        this.uvOffsetTexture = new cc.Texture2D();
+
+        this.waveWidth = this.node.width;
+        this.waveHeight = this.node.height;
+        // 模拟波形，投掷一个石头激起的波形示例
+        this.initWaveABArray();
+        this.initWaveA();
+        this.initTextureDate();
 
     }
     private initTextureDate(): void {
@@ -78,10 +67,22 @@ export default class ClickWave extends cc.Component {
             this.wa[i + 3] = 255; 
         }
         this.uvOffsetTexture.initWithData(this.wa ,cc.Texture2D.PixelFormat.RGBA8888,this.waveWidth,this.waveHeight);
+        if(this.material) {
+           this.material.setProperty("wave",cc.v2(0.5,0.5));
+        }
+        
     }
     private touchBegin(e: cc.Event.EventTouch): boolean {
-        let localPoint = this.node.convertToNodeSpaceAR(e.getLocation());
+        let localPoint: cc.Vec2 = this.node.convertToNodeSpaceAR(e.getLocation());
+        localPoint.x += this.node.width / 2;
+        localPoint.y += (-this.node.height / 2);
+        localPoint.x = Math.abs(localPoint.x) / this.node.width;
+        localPoint.y = Math.abs(localPoint.y) / this.node.height;
+
         console.log(localPoint);
+        if(this.material) {
+            this.material.setProperty("wave",localPoint);
+        }
         return true;
         
     }
@@ -128,6 +129,13 @@ export default class ClickWave extends cc.Component {
 
     }
     update (dt) {
+        this.time += dt;
         // this.calculateWave();
+        if(this.material && this.uvOffsetTexture) {
+            this.material.setProperty("uvoffsetTex",this.uvOffsetTexture);
+        }
+        if(this.material) {
+            this.material.setProperty("time",this.time);
+        }
     }
 }

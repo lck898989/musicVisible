@@ -64,11 +64,16 @@ CCProgram fs %{
 
   uniform ARGS {
     vec2 iResolution;
+    vec2 wave;
     float time;
+
   }
 
   void main () {
-    
-    gl_FragColor = texture2D(uvoffsetTex,v_uv0);
+    vec2 uv = v_uv0;
+    // vec2 va = vec2(0.5,0.5);
+    float offset = distance(uv,wave);
+    uv += 0.02 * sin(-offset * 10. + time * 2.);
+    gl_FragColor = texture2D(texture,uv);
   }
 }%
