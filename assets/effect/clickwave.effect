@@ -73,7 +73,13 @@ CCProgram fs %{
     vec2 uv = v_uv0;
     // vec2 va = vec2(0.5,0.5);
     float offset = distance(uv,wave);
-    uv += 0.02 * sin(-offset * 10. + time * 2.);
+    float factor = 0.03;
+    // 衰减系数
+    if(offset < 0.8) {
+      factor *= 1. - abs(offset) / 0.5; 
+      uv.x += factor * sin(offset * 10. * uv.x + time);
+      uv.y += factor * sin(offset * 10. * uv.y + time);
+    }
     gl_FragColor = texture2D(texture,uv);
   }
 }%

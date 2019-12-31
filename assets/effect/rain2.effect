@@ -1,0 +1,182 @@
+// Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.  
+
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: vs
+      frag: fs
+      blendState:
+        targets:
+        - blend: true
+      rasterizerState:
+        cullMode: none
+      properties:
+        texture: { value: white }
+        alphaThreshold: { value: 0.5 }
+}%
+
+
+CCProgram vs %{
+  precision highp float;
+
+  #include <cc-global>
+  #include <cc-local>
+
+  in vec3 a_position;
+  in vec4 a_color;
+  out vec4 v_color;
+
+  #if USE_TEXTURE
+  in vec2 a_uv0;
+  out vec2 v_uv0;
+  #endif
+
+  void main () {
+    vec4 pos = vec4(a_position, 1);
+
+    #if CC_USE_MODEL
+    pos = cc_matViewProj * cc_matWorld * pos;
+    #else
+    pos = cc_matViewProj * pos;
+    #endif
+
+    #if USE_TEXTURE
+    v_uv0 = a_uv0;
+    #endif
+
+    v_color = a_color;
+
+    gl_Position = pos;
+  }
+}%
+
+
+CCProgram fs %{
+  precision highp float;
+  
+  #include <alpha-test>
+
+  in vec4 v_color;
+
+  in vec2 v_uv0;
+  uniform sampler2D texture;
+  uniform sampler2D noiseTex;
+  uniform ARGS {
+    vec2 iResolution;
+    float time;
+  }
+  // 围绕x轴旋转点
+  vec3 rotateX(vec3 p, float t)
+  {
+    float s = sin(t);
+    float c = cos(t);
+    mat3 m = mat3(
+      1.0, 0.0, 0.0, 
+      0.0, c, -s, 
+      0.0, s, c
+      );
+    return p * m;
+  }
+  // 围绕着y轴旋转
+  vec3 rotateY(vec3 p, float t)
+  {
+    float s = sin(t);
+    float c = cos(t);
+    mat3 m = mat3(
+      c, 0.0, s, 
+      0.0, 1, 0.0, 
+      -s, 0.0, c
+      );
+    return p * m;
+  }
+  // 围绕z轴旋转点
+  vec3 rotateZ(vec3 p, float t)
+  {
+    float s = sin(t);
+    float c = cos(t);
+    mat3 m = mat3(
+      c, -s, 0.0, 
+      s, c, 0.0, 
+      0.0, 0.0, 1.0
+      );
+    return p * m;
+  }
+  // Noise (from iq) 噪声制造
+  float noise (in vec3 p) {
+    vec3 f = fract (p);
+    p = floor (p);
+    // 3*x*x - 2 * x * x * x; 功能类似 smoothstep()
+    f = f * f * (3.0 - 2.0 * f);
+    f.xy += p.xy + p.z * vec2 (37.0, 17.0);
+    f.xy = texture2D (noiseTex, (f.xy + 0.5) / 256.0, -256.0).yx;
+    return mix (f.x, f.y, f.z);
+  }
+
+  // FBM
+  float fbm (in vec3 p) {
+    return noise (p) + noise (p * 2.0) / 2.0 + noise (p * 4.0) / 4.0;
+  }
+
+  float city (in vec2 uv, in float offset)
+  {
+      vec2 grid = vec2(20., 1.);
+      uv.x += offset;
+      float n1 = fbm((vec2(ivec2(uv * grid)) + .5).xxx);
+      uv.x *= n1 * 6.;
+      vec2 id = vec2(ivec2(uv * grid)) + .5;
+      float n = fbm(id.xxx);
+      float buildingHeight = n;
+      buildingHeight = (n1 > .3) ? buildingHeight + fract(uv * grid).x * n1 * .1 : buildingHeight;
+    return (uv.y < buildingHeight) ? 1. : 0.;
+  }
+
+  float cityLights (in vec2 uv, in float offset)
+  {
+      vec2 grid = vec2(20., 1.);
+      uv.x += offset;
+      float n1 = fbm((vec2(ivec2(uv * grid)) + .5).xxx);
+      uv.x *= n1 * 6.;
+      vec2 id = vec2(ivec2(uv * grid)) + .5;
+      float n = fbm(id.xxx);
+      vec2 lightGrid = vec2(79. * (n + .5), 200. * n);
+      float n2 = fbm((vec2(ivec2(uv * lightGrid + floor(time * .2) * .1)) + .5).xyx);
+      vec2 lPos = fract(uv * lightGrid);
+      n2 = (lPos.y < .2 || lPos.y > .7) ? 0. : n2;
+      n2 = (lPos.x < .5 || lPos.y > .7) ? 0. : n2;
+      n2 = smoothstep(.2 + .1 * cos(time * .1), .6, n2);
+    return (uv.y < n - 0.01) ? n2 : 0.;
+  }
+
+  float rainLayer (in vec2 uv, in float offset, in float rotate, in vec2 grid, in float density)
+  {
+    uv = rotateZ(uv.xyx, rotate).xy;
+      uv.x += offset;
+      vec2 id = vec2(ivec2(uv * grid)) + .5;
+      float n1 = fbm(id.xxx);
+      uv.y += time * (n1 + .5) * density;
+      id = vec2(ivec2(uv * grid)) + .5;
+      vec2 mid = abs(fract(uv * grid));
+      mid.x *= 2.;
+      float n = fbm(id.xyx);
+    return mid.x * (1. - mid.y) * smoothstep(.3, .4, n) * smoothstep(0., .5, mid.x)*smoothstep(1., .5, mid.x);
+  }
+
+  void mainImage( out vec4 fragColor, in vec2 fragCoord )
+  {
+    vec2 uv = fragCoord/iResolution.xy;
+    float r1 = rainLayer(uv, 23., .4, vec2(76., 6.), 2.1);
+    r1 += rainLayer(uv, 38., .38, vec2(96., 6.), 2.);
+    r1 += rainLayer(uv, 38.4, .38, vec2(96., 6.), 2.3) * .5;
+    vec3 f = mix(vec3(0.2, 0.4, .6) * .5, vec3(.2, .3, .6) * .2, uv.y);
+    f -= city(uv, 3.) * .1 ;
+    f -= city(uv, 2.);
+    f = clamp(f, vec3(0.), vec3(1.));
+    f += r1;
+    f += cityLights(uv, 2.);
+    f -= city(uv * vec2(1., 2.5) + vec2(0., .0), 64.);
+    fragColor = vec4(f,1.0);
+  }
+  void main () {
+    mainImage(gl_FragColor,v_uv0.xy * iResolution.xy);
+  }
+}%
