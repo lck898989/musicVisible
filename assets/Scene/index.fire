@@ -269,9 +269,9 @@
     "_opacity": 255,
     "_color": {
       "__type__": "cc.Color",
-      "r": 158,
-      "g": 134,
-      "b": 134,
+      "r": 37,
+      "g": 22,
+      "b": 22,
       "a": 255
     },
     "_contentSize": {
@@ -1305,6 +1305,9 @@
     "_components": [
       {
         "__id__": 32
+      },
+      {
+        "__id__": 33
       }
     ],
     "_prefab": null,
@@ -1386,5 +1389,15 @@
     "_isTrimmedMode": true,
     "_atlas": null,
     "_id": "3dqC+sqHxC05DD3ZsmdyyF"
+  },
+  {
+    "__type__": "87e21ZOcOJOnK57wWZPUejJ",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 31
+    },
+    "_enabled": true,
+    "_id": "b7YtS3x1RCP51vbkDQh3Oe"
   }
 ]

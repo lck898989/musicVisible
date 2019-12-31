@@ -13,31 +13,34 @@ const {ccclass, property} = cc._decorator;
 @ccclass
 export default class NewClass extends cc.Component {
 
-    @property(cc.Label)
-    label: cc.Label = null;
-
-    @property
-    text: string = 'hello';
+    
     
     private noiseText: cc.Sprite;
     // LIFE-CYCLE CALLBACKS:
     private time: number = 0;
     // onLoad () {}
     private mat: cc.Material;
+    private startSend: boolean = false;
     start () {
         // 获取材质
-
+        this.noiseText = this.node.getComponent(cc.Sprite);
         this.mat = this.node.getComponent(cc.Sprite).sharedMaterials[0];
+        let self = this;
         cc.loader.loadRes("noise",cc.SpriteFrame,(err: any,res: cc.SpriteFrame) => {
-            this.noiseText.spriteFrame = res;
-            this.mat.setProperty("noiseTex",this.noiseText.spriteFrame.getTexture());
-            this.mat.setProperty("iResolution",cc.v2(this.node.width,this.node.height));
-            // 设置时间参数
-            this.mat.setProperty("time",this.time);
+            self.noiseText.spriteFrame = res;
+            self.mat.setProperty("noiseTex",self.noiseText.spriteFrame.getTexture());
+            self.mat.setProperty("iResolution",cc.v2(self.node.width,self.node.height));
+            this.startSend = true;
+            
         })
     }
 
     update (dt) {
-        this.time += dt;
+        let self = this;
+        if(this.startSend) {
+            this.time += dt;
+            // 设置时间参数
+            self.mat.setProperty("time",self.time);
+        }
     }
 }
