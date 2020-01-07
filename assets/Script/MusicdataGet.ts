@@ -121,6 +121,9 @@ export default class MusicdataGet extends cc.Component {
                 }
                 cc.director.loadScene("index");
                 break;
+            case "fire":
+                cc.director.loadScene("fireShader");
+                break;    
         }
     }
     update (dt) {
